@@ -1,0 +1,1987 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>MOOC 监视器</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    body {
+      padding: 16px 18px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      font-size: 13px;
+      line-height: 1.5;
+      user-select: none;
+    }
+    .bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--stroke);
+      background: var(--bg-raised);
+    }
+    .status-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--agenda-bg);
+      color: var(--agenda-ink);
+    }
+    .pill.warn {
+      background: rgba(196, 90, 18, 0.14);
+      color: var(--warn);
+    }
+    .btn-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    input[type="text"], input[type="password"] {
+      border: 1px solid var(--stroke);
+      background: var(--bg-page);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font: inherit;
+      font-size: 12.5px;
+      outline: none;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      border-color: var(--neu-blue);
+    }
+    button {
+      appearance: none;
+      border: 1px solid var(--stroke);
+      background: var(--bg-raised);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: filter 120ms ease, transform 100ms ease;
+    }
+    button:hover { filter: brightness(0.96); }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.5; cursor: default; transform: none; }
+    button.primary {
+      background: var(--neu-blue);
+      color: #ffffff;
+      border-color: var(--neu-blue);
+    }
+    html[data-theme="dark"] button.primary {
+      color: #091326;
+    }
+    .section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+      max-width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--stroke);
+      background: var(--bg-raised);
+    }
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .section-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .hint {
+      margin: 0;
+      font-size: 12px;
+      color: var(--ink-dim);
+    }
+    .auth-inputs {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--stroke);
+      background: rgba(127, 127, 127, 0.04);
+      max-width: 100%;
+    }
+    .filter-bar input[type="text"] {
+      flex: 1 1 150px;
+      min-width: 120px;
+      max-width: 100%;
+    }
+    select {
+      font: inherit;
+      font-size: 12.5px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--stroke);
+      background: var(--bg-page);
+      color: var(--ink);
+      outline: none;
+      cursor: pointer;
+      max-width: 100%;
+      min-width: 0;
+    }
+    select:focus {
+      border-color: var(--neu-blue);
+    }
+    textarea {
+      width: 100%;
+      resize: vertical;
+      min-height: 76px;
+      border: 1px solid var(--stroke);
+      background: var(--bg-page);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font: inherit;
+      font-size: 12.5px;
+      line-height: 1.55;
+      outline: none;
+      user-select: text;
+    }
+    textarea:focus {
+      border-color: var(--neu-blue);
+    }
+    .comment-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--stroke);
+    }
+    .peer-tags {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .table-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    table.hw-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 8px;
+      border-bottom: 1px solid var(--stroke);
+      vertical-align: middle;
+    }
+    th {
+      color: var(--ink-dim);
+      font-weight: 600;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    td.col-course {
+      width: 112px;
+      min-width: 86px;
+      max-width: 165px;
+      word-break: break-word;
+    }
+    td.col-kind, th.col-kind {
+      width: 46px;
+      white-space: nowrap;
+      text-align: center;
+    }
+    td.col-title {
+      min-width: 136px;
+      word-break: break-word;
+    }
+    td.col-ddl, th.col-ddl {
+      width: 130px;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+    td.col-status, th.col-status {
+      width: 68px;
+      white-space: nowrap;
+      text-align: center;
+    }
+    td.col-peer, th.col-peer {
+      width: 108px;
+      white-space: nowrap;
+      text-align: center;
+    }
+    td.col-action, th.col-action {
+      width: 62px;
+      white-space: nowrap;
+      text-align: center;
+    }
+    td.col-action button {
+      white-space: nowrap;
+      padding: 4px 10px;
+    }
+    tr:last-child td { border-bottom: 0; }
+    @media (max-width: 680px) {
+      body { padding: 12px 12px 24px; }
+      .section { padding: 10px 12px; }
+      .table-wrap { overflow-x: visible; }
+      .hw-table thead { display: none; }
+      .hw-table, .hw-table tbody { display: block; width: 100%; }
+      .hw-table tr {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 8px;
+        padding: 10px 2px;
+        border-bottom: 1px solid var(--stroke);
+      }
+      .hw-table tr:last-child { border-bottom: 0; }
+      .hw-table td {
+        display: inline-flex;
+        align-items: center;
+        padding: 0;
+        border: 0;
+        width: auto !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        text-align: left !important;
+        white-space: normal;
+      }
+      .hw-table tr.empty-row td {
+        display: block;
+        width: 100% !important;
+        text-align: center !important;
+        padding: 16px 0;
+      }
+      .hw-table td.col-course {
+        order: 1;
+        font-size: 13px;
+      }
+      .hw-table td.col-kind {
+        order: 2;
+        font-size: 11px;
+        padding: 1px 6px;
+        border-radius: 4px;
+        background: rgba(127, 127, 127, 0.12);
+        color: var(--ink-dim);
+      }
+      .hw-table td.col-action {
+        order: 3;
+        margin-left: auto;
+      }
+      .hw-table td.col-title {
+        order: 4;
+        flex: 1 0 100%;
+        line-height: 1.45;
+      }
+      .hw-table td.col-ddl {
+        order: 5;
+        font-size: 12px;
+        color: var(--ink-dim);
+        margin-right: auto;
+      }
+      .hw-table td.col-ddl::before {
+        content: "截止 ";
+        margin-right: 4px;
+      }
+      .hw-table td.col-status { order: 6; }
+      .hw-table td.col-peer { order: 7; }
+    }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .tag.todo {
+      background: rgba(196, 90, 18, 0.14);
+      color: var(--warn);
+    }
+    .tag.done {
+      background: rgba(31, 122, 77, 0.14);
+      color: var(--ok);
+    }
+    .tag.review {
+      background: rgba(11, 58, 130, 0.12);
+      color: var(--neu-blue);
+    }
+    .tag.phase {
+      background: rgba(127, 127, 127, 0.14);
+      color: var(--ink-dim);
+    }
+    .tag.expired {
+      background: rgba(209, 52, 56, 0.14);
+      color: #c42b1c;
+    }
+    html[data-theme="dark"] .tag.expired {
+      background: rgba(255, 107, 107, 0.18);
+      color: #ff8a8a;
+    }
+    .switch-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    label.chk {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 12.5px;
+    }
+    .log-box {
+      margin: 0;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--stroke);
+      font-family: Consolas, monospace;
+      font-size: 11.5px;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: var(--ink-dim);
+      user-select: text;
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部账号与登录状态区 -->
+  <div class="section">
+    <div class="section-head">
+      <div class="status-group">
+        <span class="pill warn" id="auth-pill">未登录中国大学MOOC</span>
+        <span class="hint" id="sync-stat">尚未巡检</span>
+      </div>
+      <div class="btn-row">
+        <button type="button" id="btn-toggle-cookie">手动粘贴 Cookie</button>
+        <button type="button" id="btn-logout" style="display:none;">退出 MOOC</button>
+        <button type="button" class="primary" id="btn-check-now">立即拉取 / 巡检</button>
+      </div>
+    </div>
+    <div class="auth-inputs" id="login-form-row">
+      <input type="text" id="inp-user" placeholder="手机号 / 邮箱账号" style="width:165px;" />
+      <input type="password" id="inp-pass" placeholder="MOOC 登录密码" style="width:155px;" />
+      <button type="button" class="primary" id="btn-login">
+        登录 MOOC 账号 (弹出认证窗并自动填表)
+      </button>
+      <span class="hint">点击后弹出官方登录窗并自动填入账号密码（若有滑块请在窗内划一下，登录成功自动关闭并捕获 Cookie）。</span>
+    </div>
+    <div class="auth-inputs" id="cookie-paste-row" style="display:none;">
+      <input type="text" id="inp-cookie" placeholder="粘贴浏览器 icourse163.org 的 Cookie (含 STUDY_SESS=...; NTESSTUDYSI=...)" style="flex:1;min-width:240px;" />
+      <button type="button" class="primary" id="btn-save-cookie">保存 Cookie 并验证</button>
+    </div>
+  </div>
+
+  <!-- 自动化策略开关 -->
+  <div class="section">
+    <div class="section-head">
+      <h2 class="section-title">自动化与指针式 DDL 提醒设置</h2>
+      <div class="btn-row">
+        <button type="button" id="btn-test-hint">测试顶岛短提示 (4秒)</button>
+        <button type="button" id="btn-test-remind">测试顶岛强提醒 (10秒)</button>
+      </div>
+    </div>
+    <div class="switch-row">
+      <label class="chk">
+        <input type="checkbox" id="chk-auto-agenda" checked />
+        自动将未交作业写入泥洞「日程表」（周视图以红色指针线显示，不挤占日程宽度）
+      </label>
+      <label class="chk">
+        <input type="checkbox" id="chk-auto-island" checked />
+        发现未完成或即将截止作业时弹出顶岛提醒
+      </label>
+      <label class="chk">
+        <input type="checkbox" id="chk-auto-grade" checked />
+        自动检测待批改（互评）作业并全给满分（按 MOOC 要求完成全部份数）
+      </label>
+      <label class="chk">
+        <input type="checkbox" id="chk-auto-self-grade" checked />
+        同时自动完成「自评作业」（全给满分）
+      </label>
+    </div>
+    <div class="comment-panel">
+      <div class="section-head">
+        <div>
+          <strong style="font-size:12.5px;">自定义互评 / 自评语库</strong>
+          <span class="hint" id="comment-pool-hint" style="margin-left:8px;">当前共 4 条评语</span>
+        </div>
+        <div class="btn-row">
+          <select id="sel-comment-mode" title="评语抽取方式">
+            <option value="random">随机抽取</option>
+            <option value="sequential">顺序轮换</option>
+          </select>
+          <button type="button" id="btn-reset-comments">恢复默认</button>
+          <button type="button" class="primary" id="btn-save-comments">保存评语库</button>
+        </div>
+      </div>
+      <textarea id="txt-comment-pool" rows="4" placeholder="每行一条评语，互评和自评时将按所选方式自动抽取…"></textarea>
+      <span class="hint">每行输入一条评语（自动忽略空行；若全部清空则自动使用默认评语）。修改后点击「保存评语库」生效。</span>
+    </div>
+  </div>
+
+  <!-- 1. 作业表 -->
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">1. MOOC 作业与测验表</h2>
+        <p class="hint">开启上方自动同步后，未交且未截止的作业会以红色水平指针线 + 右侧圆点自动渲染在泥洞「日程」周视图中，完成后自动移除。</p>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <select id="flt-course" title="按课程筛选">
+        <option value="all">全部课程</option>
+      </select>
+      <select id="flt-status" title="按完成状态筛选">
+        <option value="all">全部状态</option>
+        <option value="todo">未完成（含逾期）</option>
+        <option value="todo_active">未完成（提交中）</option>
+        <option value="overdue">仅已逾期</option>
+        <option value="done">仅已完成</option>
+      </select>
+      <select id="flt-kind" title="按类型筛选">
+        <option value="all">全部类型</option>
+        <option value="作业">仅作业</option>
+        <option value="测验">仅测验</option>
+      </select>
+      <select id="flt-peer" title="按互评状态筛选">
+        <option value="all">全部互评状态</option>
+        <option value="pending">待互评 / 待自评</option>
+        <option value="submit">提交阶段</option>
+        <option value="wait">待互评</option>
+        <option value="progress">已互评 (进行中)</option>
+        <option value="done">已完成</option>
+        <option value="expired">已过期</option>
+        <option value="none">无互评</option>
+      </select>
+      <input type="text" id="flt-keyword" placeholder="搜索章节 / 作业名称 / 课程…" />
+      <button type="button" id="btn-reset-filter">重置筛选</button>
+      <span class="hint" id="flt-summary" style="margin-left:auto;">显示 0 / 共 0 项</span>
+    </div>
+    <div class="table-wrap">
+      <table class="hw-table">
+        <thead>
+          <tr>
+            <th class="col-course">课程名称</th>
+            <th class="col-kind">类型</th>
+            <th class="col-title">章节 · 作业 / 测验名称</th>
+            <th class="col-ddl">截止时间 (DDL)</th>
+            <th class="col-status">完成状态</th>
+            <th class="col-peer">互评状态</th>
+            <th class="col-action">操作</th>
+          </tr>
+        </thead>
+        <tbody id="hw-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. 日程联动 & 自动满分互评日志 -->
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <h2 class="section-title">2. 已写入日程表的 DDL 指针 & 互评批改日志</h2>
+        <p class="hint" id="agenda-count-hint">当前已写入泥洞日程表 0 条</p>
+      </div>
+      <div class="btn-row">
+        <button type="button" id="btn-open-log">打开完整日志文件</button>
+        <button type="button" id="btn-grade-all" class="primary">立即执行自动满分互评</button>
+        <button type="button" id="btn-clear-agenda">清空本插件写入的 DDL</button>
+      </div>
+    </div>
+    <pre class="log-box" id="log-box"></pre>
+  </div>
+
+  <script>
+    (function() {
+      const DEFAULT_COMMENTS = [
+        "解答完整，思路清晰，符合题目各项要求。",
+        "步骤规范，推导准确，卷面整洁，给满分。",
+        "逻辑严密，分析到位，计算结果准确无误。",
+        "回答切中要点，论述详实，完成质量很高。"
+      ];
+
+      function escapeHtml(str) {
+        return String(str == null ? "" : str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function pad(n) { return String(n).padStart(2, "0"); }
+      function fmtLocal(d) {
+        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) +
+               "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+      }
+
+      function getDeadlineMs(h) {
+        if (h && h.deadlineMs) return Number(h.deadlineMs);
+        if (h && h.deadline) {
+          const t = new Date(h.deadline).getTime();
+          if (!isNaN(t)) return t;
+        }
+        return 0;
+      }
+
+      function isPastDeadline(h, nowMs) {
+        const dl = getDeadlineMs(h);
+        return dl > 0 && nowMs > dl;
+      }
+
+      /**
+       * 统一计算互评阶段状态（6 种状态）：
+       *   none     -> 无互评
+       *   submit   -> 提交阶段
+       *   wait     -> 待互评
+       *   progress -> 已互评 x/x
+       *   done     -> 已完成（互评结束 + 已互评达标）
+       *   expired  -> 已过期（互评结束 + 未互评达标，或未提交且提交阶段已结束）
+       */
+      function computePeerState(h, nowMs) {
+        const hasPeer = Boolean(h && h.hasPeerReview && h.evaluateStartMs && h.evaluateEndMs);
+        if (!hasPeer) {
+          return {
+            code: "none",
+            label: "无互评",
+            tagClass: "",
+            isHint: true,
+            actionable: false,
+            inEvalWindow: false,
+            tooltip: (h && h.kind === "测验") ? "客观测验无需互评" : "该作业未开启互评"
+          };
+        }
+
+        const dlMs = getDeadlineMs(h);
+        const evalStart = Number(h.evaluateStartMs);
+        const evalEnd = Number(h.evaluateEndMs);
+        const total = Number(h.peerTotal || 0);
+        const done = Number(h.peerDone || 0);
+        const startStr = fmtLocal(new Date(evalStart)).replace("T", " ");
+        const endStr = fmtLocal(new Date(evalEnd)).replace("T", " ");
+
+        // 1. 仍在提交截止时间前 -> 提交阶段
+        if ((dlMs > 0 && nowMs <= dlMs) || (dlMs === 0 && nowMs < evalStart)) {
+          return {
+            code: "submit",
+            label: "提交阶段",
+            tagClass: "phase",
+            isHint: false,
+            actionable: false,
+            inEvalWindow: false,
+            tooltip: "作业处于提交阶段，互评将于 " + startStr + " 开始"
+          };
+        }
+
+        // 2. 提交阶段已结束，但作业本身未提交 -> 无法参与互评（已过期）
+        if (!h.completed && done === 0) {
+          return {
+            code: "expired",
+            label: "已过期",
+            tagClass: "expired",
+            isHint: false,
+            actionable: false,
+            inEvalWindow: false,
+            tooltip: "作业未提交且提交阶段已结束，无法参与互评"
+          };
+        }
+
+        // 3. 提交已结束，但尚未到互评开始时间 -> 待互评
+        if (nowMs < evalStart) {
+          return {
+            code: "wait",
+            label: "待互评",
+            tagClass: "review",
+            isHint: false,
+            actionable: false,
+            inEvalWindow: false,
+            tooltip: "提交已截止，互评将于 " + startStr + " 开放"
+          };
+        }
+
+        // 4. 互评进行中（evalStart <= nowMs <= evalEnd）
+        if (nowMs <= evalEnd) {
+          const needSelf = Boolean(h.selfRequired && !h.selfDone);
+          if (done === 0) {
+            return {
+              code: "wait",
+              label: "待互评",
+              tagClass: "review",
+              isHint: false,
+              actionable: true,
+              inEvalWindow: true,
+              tooltip: "互评进行中（0/" + (total || 5) + "），截止时间：" + endStr
+            };
+          }
+          const metTarget = total > 0 && done >= total;
+          return {
+            code: "progress",
+            label: "已互评 " + done + "/" + (total || done),
+            tagClass: metTarget ? "done" : "review",
+            isHint: false,
+            actionable: !metTarget || needSelf,
+            inEvalWindow: true,
+            tooltip: "互评进行中（" + (metTarget ? "已达标" : "未满额，需评 " + total + " 份") + "），截止时间：" + endStr
+          };
+        }
+
+        // 5. 互评已结束（nowMs > evalEnd）
+        if (total > 0 && done >= total) {
+          return {
+            code: "done",
+            label: "已完成",
+            tagClass: "done",
+            isHint: false,
+            actionable: false,
+            inEvalWindow: false,
+            tooltip: "互评已于 " + endStr + " 结束，已完成互评 " + done + "/" + total + " 份"
+          };
+        }
+        return {
+          code: "expired",
+          label: "已过期",
+          tagClass: "expired",
+          isHint: false,
+          actionable: false,
+          inEvalWindow: false,
+          tooltip: "互评已于 " + endStr + " 结束，未完成要求份数（" + done + "/" + (total || 5) + "）"
+        };
+      }
+
+      let homeworks = [];
+      let config = {
+        autoAgenda: true,
+        autoIsland: true,
+        autoGrade: true,
+        autoSelfGrade: true,
+        commentPool: DEFAULT_COMMENTS.slice(),
+        commentMode: "random",
+        commentCursor: 0,
+        savedUser: "",
+        savedPass: "",
+        notifiedIds: [],
+        lastCheckMs: 0
+      };
+      let moocUser = null; // { uid, name }
+      let logs = [];
+      let checkInFlight = false;
+      let gradeInFlight = false;
+      let lastRandomComment = "";
+
+      const tbody = document.getElementById("hw-tbody");
+      const logBox = document.getElementById("log-box");
+      const syncStat = document.getElementById("sync-stat");
+      const authPill = document.getElementById("auth-pill");
+      const btnLogout = document.getElementById("btn-logout");
+      const inpUser = document.getElementById("inp-user");
+      const inpPass = document.getElementById("inp-pass");
+      const inpCookie = document.getElementById("inp-cookie");
+      const cookiePasteRow = document.getElementById("cookie-paste-row");
+      const agendaCountHint = document.getElementById("agenda-count-hint");
+      const chkAutoAgenda = document.getElementById("chk-auto-agenda");
+      const chkAutoIsland = document.getElementById("chk-auto-island");
+      const chkAutoGrade = document.getElementById("chk-auto-grade");
+      const chkAutoSelfGrade = document.getElementById("chk-auto-self-grade");
+      const txtCommentPool = document.getElementById("txt-comment-pool");
+      const selCommentMode = document.getElementById("sel-comment-mode");
+      const commentPoolHint = document.getElementById("comment-pool-hint");
+      const fltCourse = document.getElementById("flt-course");
+      const fltStatus = document.getElementById("flt-status");
+      const fltKind = document.getElementById("flt-kind");
+      const fltPeer = document.getElementById("flt-peer");
+      const fltKeyword = document.getElementById("flt-keyword");
+      const fltSummary = document.getElementById("flt-summary");
+
+      function normalizeCommentList(rawList) {
+        if (!Array.isArray(rawList)) return DEFAULT_COMMENTS.slice();
+        const cleaned = rawList
+          .map(function(s) { return String(s == null ? "" : s).trim(); })
+          .filter(function(s) { return s.length > 0; });
+        return cleaned.length > 0 ? cleaned : DEFAULT_COMMENTS.slice();
+      }
+
+      function getActiveCommentPool() {
+        return normalizeCommentList(config.commentPool);
+      }
+
+      function renderCommentPoolUI() {
+        const pool = getActiveCommentPool();
+        txtCommentPool.value = pool.join("\n");
+        selCommentMode.value = config.commentMode === "sequential" ? "sequential" : "random";
+        commentPoolHint.textContent =
+          "当前共 " + pool.length + " 条评语（" +
+          (selCommentMode.value === "sequential" ? "顺序轮换" : "随机抽取") + "）";
+      }
+
+      function pickComment() {
+        const pool = getActiveCommentPool();
+        if (config.commentMode === "sequential") {
+          const idx = Math.abs(Number(config.commentCursor) || 0) % pool.length;
+          config.commentCursor = (idx + 1) % pool.length;
+          return pool[idx];
+        }
+        let idx = Math.floor(Math.random() * pool.length);
+        if (pool.length > 1 && pool[idx] === lastRandomComment) {
+          idx = (idx + 1) % pool.length;
+        }
+        lastRandomComment = pool[idx];
+        return pool[idx];
+      }
+
+      function addLog(text) {
+        const now = new Date();
+        const t = pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+        const d = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate());
+        logs.unshift("[" + t + "] " + text);
+        if (logs.length > 80) logs.length = 80;
+        logBox.textContent = logs.join("\n");
+        if (window.nidong && window.nidong.log) {
+          window.nidong.log.append("[" + d + " " + t + "] " + text).catch(function() {});
+        }
+      }
+
+      function buildHomeworkTitle(chName, rawTitle, kind) {
+        const ch = String(chName || "").trim();
+        const raw = String(rawTitle || kind || "").trim();
+        if (!ch) return raw || "未命名作业";
+        if (!raw) return ch;
+        const normCh = ch.replace(/\s+/g, "");
+        const normRaw = raw.replace(/\s+/g, "");
+        if (normRaw.indexOf(normCh) !== -1) return raw;
+        return ch + " · " + raw;
+      }
+
+      function computeStart30MinBefore(deadlineIso) {
+        const d = new Date(deadlineIso);
+        if (isNaN(d.getTime())) return deadlineIso;
+        const start = new Date(d.getTime() - 30 * 60 * 1000);
+        if (start.getDate() !== d.getDate()) {
+          start.setFullYear(d.getFullYear(), d.getMonth(), d.getDate());
+          start.setHours(0, 0, 0, 0);
+        }
+        return fmtLocal(start);
+      }
+
+      async function saveState() {
+        if (!window.nidong) return;
+        await window.nidong.storage.set("homeworks", homeworks);
+        await window.nidong.storage.set("config", config);
+        await updateBadge();
+      }
+
+      async function updateBadge() {
+        if (!window.nidong) return;
+        const nowMs = Date.now();
+        const todoCount = homeworks.filter(function(h) {
+          return !h.completed && !isPastDeadline(h, nowMs);
+        }).length;
+        const peerCount = homeworks.filter(function(h) {
+          return computePeerState(h, nowMs).actionable;
+        }).length;
+        const parts = [];
+        if (todoCount > 0) parts.push(todoCount + " 项未交");
+        if (peerCount > 0) parts.push(peerCount + " 项待互评");
+        await window.nidong.setBadge(parts.length > 0 ? parts.join(" · ") : "已全部完成");
+      }
+
+      async function refreshSyncedAgendaView() {
+        if (!window.nidong) return;
+        try {
+          const list = await window.nidong.agenda.list();
+          agendaCountHint.textContent =
+            "当前已写入泥洞日程表 " + list.length + " 条 DDL 指针（可在左侧「日程」查看红色指针线）";
+        } catch (e) {
+          addLog("读取日程失败：" + e.message);
+        }
+      }
+
+      function parseStudyInfoCookie(cookies) {
+        if (!cookies) return null;
+        const raw = cookies["STUDY_INFO"];
+        if (!raw) return null;
+        try {
+          const decoded = decodeURIComponent(raw.replace(/^"|"$/g, ""));
+          const parts = decoded.split("|");
+          if (parts.length >= 3) {
+            return {
+              name: parts[0] || "MOOC用户",
+              uid: parts[2] || parts[1] || ""
+            };
+          }
+        } catch (_) {}
+        return null;
+      }
+
+      function updateAuthUI() {
+        if (moocUser) {
+          authPill.textContent = "已登录 MOOC：" + moocUser.name + (moocUser.uid ? " (UID: " + moocUser.uid + ")" : "");
+          authPill.className = "pill";
+          btnLogout.style.display = "inline-block";
+        } else {
+          authPill.textContent = "未登录中国大学MOOC";
+          authPill.className = "pill warn";
+          btnLogout.style.display = "none";
+        }
+      }
+
+      // 精确解析 MocEvaluateBean.getEvaluateDetail.dwr 返回的互评与自评状态
+      function parseDwrEvaluateDetail(dwrText) {
+        if (!dwrText) return null;
+        if (dwrText.indexOf("_remoteHandleException") !== -1) return null;
+        if (/_remoteHandleCallback\([^,]+,[^,]+,\s*null\s*\)/.test(dwrText)) {
+          return {
+            eligible: false,
+            total: 0,
+            done: 0,
+            started: null,
+            self: null,
+            selfRequired: false,
+            selfDone: false,
+            enoughAnswer: false
+          };
+        }
+        const cbMatch = dwrText.match(/_remoteHandleCallback\([^,]+,[^,]+,\s*(\{[\s\S]*\})\s*\)/);
+        if (!cbMatch) return null;
+        const cbBody = cbMatch[1];
+
+        // 收集所有 DWR 临时对象 sN.prop = val;
+        const vars = {};
+        const propRe = /\b(s\d+)\.([a-zA-Z0-9_]+)\s*=\s*([^;]+);/g;
+        let pm;
+        while ((pm = propRe.exec(dwrText)) !== null) {
+          if (!vars[pm[1]]) vars[pm[1]] = {};
+          vars[pm[1]][pm[2]] = pm[3].trim();
+        }
+
+        const totalMatch = cbBody.match(/totalEvaluateCount\s*:\s*(\d+)/);
+        const total = totalMatch ? Number(totalMatch[1]) : 5;
+        const enoughMatch = cbBody.match(/enoughAnswer\s*:\s*(true|false)/);
+        const enoughAnswer = enoughMatch ? enoughMatch[1] === "true" : true;
+
+        let done = 0;
+        const compMatch = cbBody.match(/completedEvaluates\s*:\s*(s\d+|null|\[\])/);
+        if (compMatch && /^s\d+$/.test(compMatch[1])) {
+          const itemRe = new RegExp("\\b" + compMatch[1] + "\\[\\d+\\]\\s*=", "g");
+          const itemMatches = dwrText.match(itemRe);
+          done = itemMatches ? itemMatches.length : 0;
+        }
+
+        let started = null;
+        const startedMatch = cbBody.match(/startedEvaluate\s*:\s*(s\d+|null)/);
+        if (startedMatch && startedMatch[1] !== "null" && vars[startedMatch[1]]) {
+          const sv = vars[startedMatch[1]];
+          if (sv.evaluateId && Number(sv.status) !== 2) {
+            started = {
+              evaluateId: Number(sv.evaluateId),
+              answerformId: sv.answerformId ? Number(sv.answerformId) : null,
+              status: Number(sv.status || 1)
+            };
+          }
+        }
+
+        let selfEval = null;
+        const selfMatch = cbBody.match(/selfEvaluate\s*:\s*(s\d+|null)/);
+        if (selfMatch && selfMatch[1] !== "null" && vars[selfMatch[1]]) {
+          const sf = vars[selfMatch[1]];
+          if (sf.evaluateId) {
+            selfEval = {
+              evaluateId: Number(sf.evaluateId),
+              answerformId: sf.answerformId ? Number(sf.answerformId) : null,
+              status: Number(sf.status || 1)
+            };
+          }
+        }
+
+        return {
+          eligible: true,
+          total: total,
+          done: done,
+          started: started,
+          self: selfEval,
+          selfRequired: Boolean(selfEval),
+          selfDone: Boolean(selfEval && selfEval.status === 2),
+          enoughAnswer: enoughAnswer
+        };
+      }
+
+      async function fetchEvaluateDetail(tid) {
+        if (!window.nidong || !moocUser || !moocUser.uid) return null;
+        const dwrBody = [
+          "callCount=1",
+          "scriptSessionId=${scriptSessionId}190",
+          "httpSessionId=__NTESSTUDYSI__",
+          "c0-scriptName=MocEvaluateBean",
+          "c0-methodName=getEvaluateDetail",
+          "c0-id=0",
+          "c0-param0=number:" + tid,
+          "c0-param1=number:" + moocUser.uid,
+          "batchId=" + Date.now()
+        ].join("\n");
+        const dwrResp = await window.nidong.http.fetch({
+          url: "https://www.icourse163.org/dwr/call/plaincall/MocEvaluateBean.getEvaluateDetail.dwr",
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: dwrBody
+        });
+        return parseDwrEvaluateDetail(dwrResp.body);
+      }
+
+      async function startOnePeerEvaluate(tid) {
+        if (!window.nidong || !moocUser || !moocUser.uid) return null;
+        const startBody = [
+          "callCount=1",
+          "scriptSessionId=${scriptSessionId}190",
+          "httpSessionId=__NTESSTUDYSI__",
+          "c0-scriptName=MocEvaluateBean",
+          "c0-methodName=startOneSubmissionEvaluate",
+          "c0-id=0",
+          "c0-param0=number:" + tid,
+          "c0-param1=number:" + moocUser.uid,
+          "batchId=" + Date.now()
+        ].join("\n");
+        const startResp = await window.nidong.http.fetch({
+          url: "https://www.icourse163.org/dwr/call/plaincall/MocEvaluateBean.startOneSubmissionEvaluate.dwr",
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: startBody
+        });
+        if (!startResp.body || startResp.body.indexOf("_remoteHandleException") !== -1) {
+          return null;
+        }
+        const evalIdMatch = startResp.body.match(/evaluateId\s*[:=]\s*(\d+)/);
+        const aidMatch = startResp.body.match(/answerformId\s*[:=]\s*(\d+)/);
+        if (!evalIdMatch) return null;
+        return {
+          evaluateId: Number(evalIdMatch[1]),
+          answerformId: aidMatch ? Number(aidMatch[1]) : null
+        };
+      }
+
+      // 调用真实中国大学MOOC接口拉取在修课程与测验/作业
+      async function pullRealMoocCoursesAndHomeworks() {
+        if (!window.nidong) return false;
+        let cookies = await window.nidong.auth.getCookies();
+        if (!cookies || (!cookies["STUDY_SESS"] && !cookies["STUDY_INFO"])) {
+          moocUser = null;
+          updateAuthUI();
+          return false;
+        }
+
+        // 确保已有 NTESSTUDYSI
+        if (!cookies["NTESSTUDYSI"]) {
+          const initResp = await window.nidong.http.fetch({
+            url: "https://www.icourse163.org/",
+            method: "GET"
+          });
+          cookies = initResp.cookies || cookies;
+        }
+
+        moocUser = parseStudyInfoCookie(cookies) || { name: "已认证会话", uid: "" };
+
+        // 尝试调用 getMocMember.rpc 补充真实昵称（部分会话此接口会返回 code=-2，不影响后续课程与互评接口）
+        try {
+          const memResp = await window.nidong.http.fetch({
+            url: "https://www.icourse163.org/web/j/memberBean.getMocMember.rpc",
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: ""
+          });
+          const memJson = JSON.parse(memResp.body);
+          if (memJson && memJson.code === 0 && memJson.result) {
+            moocUser = {
+              name: memJson.result.nickName || memJson.result.realName || moocUser.name,
+              uid: String(memJson.result.id || moocUser.uid || "")
+            };
+          }
+        } catch (_) {}
+
+        updateAuthUI();
+        addLog("正在从中国大学MOOC拉取在修课程列表 (MOOC + SPOC)…");
+
+        const courses = [];
+        await Promise.all([1, 2].map(async function(cType) {
+          try {
+            const cResp = await window.nidong.http.fetch({
+              url: "https://www.icourse163.org/web/j/learnerCourseRpcBean.getMyLearnedCoursePanelList.rpc",
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: "type=30&p=1&psize=30&courseType=" + cType
+            });
+            const cJson = JSON.parse(cResp.body);
+            const list = (cJson && cJson.result && (cJson.result.result || cJson.result.list)) || [];
+            list.forEach(function(item) {
+              const termId = (item.termPanel && item.termPanel.id) || item.currentTermId || item.termId;
+              const schoolShort = (item.schoolPanel && item.schoolPanel.shortName) || "";
+              if (termId) {
+                courses.push({
+                  courseId: String(item.id || ""),
+                  schoolShort: String(schoolShort || ""),
+                  courseName: item.name || "未命名课程",
+                  termId: String(termId),
+                  isSpoc: cType === 2
+                });
+              }
+            });
+          } catch (e) {
+            addLog("拉取课程分页 (courseType=" + cType + ") 失败：" + e.message);
+          }
+        }));
+
+        addLog("共发现 " + courses.length + " 门正在进行的课程，正在并发扫描各课程章节测验、作业与互评阶段…");
+        const pulledHomeworks = [];
+        const nowMs = Date.now();
+        const prevByTid = {};
+        homeworks.forEach(function(item) {
+          if (item && item.tid) prevByTid[String(item.tid)] = item;
+        });
+
+        await Promise.all(courses.map(async function(c) {
+          try {
+            const tResp = await window.nidong.http.fetch({
+              url: "https://www.icourse163.org/web/j/courseBean.getLastLearnedMocTermDto.rpc",
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              body: "termId=" + encodeURIComponent(c.termId)
+            });
+            const tJson = JSON.parse(tResp.body);
+            const termDto = tJson && tJson.result && (tJson.result.mocTermDto || tJson.result);
+            const chapters = (termDto && termDto.chapters) || [];
+            const courseEntries = [];
+
+            for (let chIdx = 0; chIdx < chapters.length; chIdx++) {
+              const ch = chapters[chIdx];
+              const lessons = []
+                .concat((ch.quizs || []).map(function(q) { return { vo: q, kind: "测验" }; }))
+                .concat((ch.homeworks || []).map(function(hw) { return { vo: hw, kind: "作业" }; }));
+
+              for (let lIdx = 0; lIdx < lessons.length; lIdx++) {
+                const entry = lessons[lIdx];
+                const vo = entry.vo || {};
+                const test = vo.test || {};
+                const tid = test.id || vo.id;
+                if (!tid || !test.deadline) continue;
+
+                const dlMs = Number(test.deadline);
+                const dlDate = new Date(dlMs);
+                if (isNaN(dlDate.getTime())) continue;
+
+                const completed = Boolean(
+                  test.userScore != null ||
+                  (test.usedTryCount && test.usedTryCount > 0) ||
+                  (test.aid && test.aid > 0) ||
+                  test.submitStatus === 1 ||
+                  test.submitStatus === 2
+                );
+
+                const evalStartMs = Number(test.evaluateStart || 0);
+                const evalEndMs = Number(test.evaluateEnd || 0);
+                const hasPeerReview = Boolean(entry.kind === "作业" && evalStartMs > 0 && evalEndMs > 0);
+                const chTitle = String(ch.name || "").trim();
+                const fullTitle = buildHomeworkTitle(chTitle, test.name || vo.name, entry.kind);
+                const learnPrefix = c.isSpoc
+                  ? "https://www.icourse163.org/spoc/learn/"
+                  : "https://www.icourse163.org/learn/";
+                const slug = c.courseId
+                  ? (c.schoolShort ? c.schoolShort + "-" + c.courseId : c.courseId)
+                  : "";
+                const hashRoute = entry.kind === "测验" ? "#/learn/quiz?id=" : "#/learn/hw?id=";
+                const hwUrl = slug
+                  ? learnPrefix + slug + "?tid=" + c.termId + hashRoute + tid
+                  : "https://www.icourse163.org/home.htm";
+
+                courseEntries.push({
+                  tid: String(tid),
+                  test: test,
+                  item: {
+                    id: "hw_" + tid,
+                    tid: String(tid),
+                    termId: c.termId,
+                    kind: entry.kind,
+                    course: c.courseName,
+                    chapter: chTitle,
+                    title: fullTitle,
+                    url: hwUrl,
+                    deadline: fmtLocal(dlDate),
+                    deadlineMs: dlMs,
+                    completed: completed,
+                    hasPeerReview: hasPeerReview,
+                    evaluateStartMs: evalStartMs,
+                    evaluateEndMs: evalEndMs,
+                    peerTotal: hasPeerReview ? Number(test.evaluateNeedCount || 5) : 0,
+                    peerDone: 0,
+                    selfRequired: false,
+                    selfDone: false,
+                    enoughAnswer: true,
+                    evalFetchedAfterEnd: false,
+                    isReal: true
+                  }
+                });
+              }
+            }
+
+            // 并发拉取处于「互评进行中」或「互评已结束（首次）」的真实互评进度，避免历史互评误判
+            await Promise.all(courseEntries.map(async function(entry) {
+              const item = entry.item;
+              if (!item.hasPeerReview) return;
+              const inEval = nowMs >= item.evaluateStartMs && nowMs <= item.evaluateEndMs;
+              const afterEval = nowMs > item.evaluateEndMs;
+              if (!inEval && !afterEval) return;
+
+              const prev = prevByTid[item.tid];
+              if (afterEval && prev && prev.evalFetchedAfterEnd && prev.evaluateEndMs === item.evaluateEndMs) {
+                item.peerTotal = Number(prev.peerTotal || item.peerTotal || 5);
+                item.peerDone = Number(prev.peerDone || 0);
+                item.selfRequired = Boolean(prev.selfRequired);
+                item.selfDone = Boolean(prev.selfDone);
+                item.evalFetchedAfterEnd = true;
+                return;
+              }
+
+              if (!moocUser || !moocUser.uid) return;
+              try {
+                const detail = await fetchEvaluateDetail(item.tid);
+                if (detail && detail.eligible) {
+                  item.peerTotal = detail.total;
+                  item.peerDone = detail.done;
+                  item.selfRequired = detail.selfRequired;
+                  item.selfDone = detail.selfDone;
+                  item.enoughAnswer = detail.enoughAnswer;
+                  if (afterEval) item.evalFetchedAfterEnd = true;
+                } else if (detail && !detail.eligible) {
+                  // 未提交或无互评资格：保留互评总份数（供显示「已过期」），完成数记为 0
+                  item.peerDone = 0;
+                  item.selfRequired = false;
+                  item.selfDone = false;
+                  if (afterEval) item.evalFetchedAfterEnd = true;
+                }
+              } catch (_) {}
+            }));
+
+            courseEntries.forEach(function(entry) {
+              pulledHomeworks.push(entry.item);
+            });
+          } catch (e) {
+            addLog("解析课程《" + c.courseName + "》章节失败：" + e.message);
+          }
+        }));
+
+        if (pulledHomeworks.length > 0) {
+          pulledHomeworks.sort(function(a, b) {
+            const aActive = !a.completed && !isPastDeadline(a, nowMs);
+            const bActive = !b.completed && !isPastDeadline(b, nowMs);
+            if (aActive !== bActive) return aActive ? -1 : 1;
+            const aOverdue = !a.completed && isPastDeadline(a, nowMs);
+            const bOverdue = !b.completed && isPastDeadline(b, nowMs);
+            if (aOverdue !== bOverdue) return aOverdue ? -1 : 1;
+            return a.deadline.localeCompare(b.deadline);
+          });
+          homeworks = pulledHomeworks;
+          await saveState();
+          renderTable();
+          addLog("成功从中国大学MOOC同步到 " + pulledHomeworks.length + " 项真实作业/测验！");
+          return true;
+        } else {
+          addLog("当前账号在修课程中暂未发现带有截止时间的测验或作业。");
+          return true;
+        }
+      }
+
+      function updateCourseFilterOptions() {
+        const prev = fltCourse.value || "all";
+        const counts = {};
+        const order = [];
+        homeworks.forEach(function(h) {
+          const c = h.course || "未命名课程";
+          if (!counts[c]) {
+            counts[c] = 0;
+            order.push(c);
+          }
+          counts[c]++;
+        });
+        fltCourse.innerHTML = '<option value="all">全部课程 (' + homeworks.length + ')</option>';
+        order.forEach(function(c) {
+          const opt = document.createElement("option");
+          opt.value = c;
+          opt.textContent = c + " (" + counts[c] + ")";
+          fltCourse.appendChild(opt);
+        });
+        if (prev !== "all" && counts[prev]) {
+          fltCourse.value = prev;
+        } else {
+          fltCourse.value = "all";
+        }
+      }
+
+      function getFilteredHomeworks() {
+        const courseVal = fltCourse.value || "all";
+        const statusVal = fltStatus.value || "all";
+        const kindVal = fltKind.value || "all";
+        const peerVal = fltPeer.value || "all";
+        const kw = (fltKeyword.value || "").trim().toLowerCase();
+        const nowMs = Date.now();
+
+        return homeworks.filter(function(h) {
+          const pastDdl = isPastDeadline(h, nowMs);
+          if (courseVal !== "all" && h.course !== courseVal) return false;
+          if (statusVal === "todo" && h.completed) return false;
+          if (statusVal === "todo_active" && (h.completed || pastDdl)) return false;
+          if (statusVal === "overdue" && (h.completed || !pastDdl)) return false;
+          if (statusVal === "done" && !h.completed) return false;
+          if (kindVal !== "all" && (h.kind || "作业") !== kindVal) return false;
+          if (peerVal !== "all") {
+            const ps = computePeerState(h, nowMs);
+            if (peerVal === "pending") {
+              if (!ps.actionable) return false;
+            } else if (ps.code !== peerVal) {
+              return false;
+            }
+          }
+          if (kw) {
+            const hay = ((h.course || "") + " " + (h.chapter || "") + " " + (h.title || "") + " " + (h.deadline || "")).toLowerCase();
+            if (hay.indexOf(kw) === -1) return false;
+          }
+          return true;
+        });
+      }
+
+      function renderTable() {
+        updateCourseFilterOptions();
+        const filtered = getFilteredHomeworks();
+        const nowMs = Date.now();
+        fltSummary.textContent = "显示 " + filtered.length + " / 共 " + homeworks.length + " 项";
+        tbody.innerHTML = "";
+        if (filtered.length === 0) {
+          const emptyTr = document.createElement("tr");
+          emptyTr.className = "empty-row";
+          const msg = homeworks.length === 0
+            ? "暂未同步 MOOC 作业，请先登录中国大学MOOC账号"
+            : "没有符合当前筛选条件的作业或测验";
+          emptyTr.innerHTML = '<td colspan="7" class="hint" style="text-align:center;padding:18px;">' + msg + "</td>";
+          tbody.appendChild(emptyTr);
+          return;
+        }
+        filtered.forEach(function(h) {
+          const tr = document.createElement("tr");
+          const pastDdl = isPastDeadline(h, nowMs);
+          const ps = computePeerState(h, nowMs);
+
+          const statusHtml = h.completed
+            ? '<span class="tag done">已完成</span>'
+            : pastDdl
+              ? '<span class="tag expired" title="提交阶段已结束且未提交">已逾期</span>'
+              : '<span class="tag todo">未完成</span>';
+
+          let peerHtml = "";
+          if (ps.isHint) {
+            peerHtml = '<span class="hint" title="' + escapeHtml(ps.tooltip) + '">' + escapeHtml(ps.label) + "</span>";
+          } else {
+            const tags = [
+              '<span class="tag ' + ps.tagClass + '" title="' + escapeHtml(ps.tooltip) + '">' +
+                escapeHtml(ps.label) + "</span>"
+            ];
+            if (ps.inEvalWindow && h.selfRequired) {
+              tags.push(
+                h.selfDone
+                  ? '<span class="tag done" title="已完成自评作业">已自评</span>'
+                  : '<span class="tag todo" title="自评作业尚未完成">待自评</span>'
+              );
+            }
+            peerHtml = '<span class="peer-tags">' + tags.join("") + "</span>";
+          }
+
+          tr.innerHTML =
+            '<td class="col-course"><strong>' + escapeHtml(h.course) + "</strong></td>" +
+            '<td class="col-kind">' + escapeHtml(h.kind || "作业") + "</td>" +
+            '<td class="col-title">' + escapeHtml(h.title) + "</td>" +
+            '<td class="col-ddl"><code>' + escapeHtml(h.deadline.replace("T", " ")) + "</code></td>" +
+            '<td class="col-status">' + statusHtml + "</td>" +
+            '<td class="col-peer">' + peerHtml + "</td>" +
+            '<td class="col-action"></td>';
+
+          const actionTd = tr.lastElementChild;
+          const viewBtn = document.createElement("button");
+          viewBtn.type = "button";
+          viewBtn.textContent = "查看";
+          viewBtn.title = "在默认浏览器中打开此" + (h.kind || "作业");
+          viewBtn.onclick = async function() {
+            const targetUrl = h.url || "https://www.icourse163.org/home.htm";
+            try {
+              if (window.nidong && window.nidong.openExternal) {
+                await window.nidong.openExternal(targetUrl);
+              }
+            } catch (e) {
+              addLog("在浏览器打开作业失败：" + e.message);
+            }
+          };
+          actionTd.appendChild(viewBtn);
+          tbody.appendChild(tr);
+        });
+      }
+
+      async function syncHomeworkToAgenda(h) {
+        if (!window.nidong) return;
+        if (h.completed) {
+          await window.nidong.agenda.delete(h.id);
+          return;
+        }
+        const start = computeStart30MinBefore(h.deadline);
+        await window.nidong.agenda.upsert({
+          id: h.id,
+          name: "[MOOC截止] " + h.course + " · " + h.title,
+          location: "中国大学MOOC",
+          note: "",
+          start: start,
+          end: h.deadline,
+          remind: true,
+          remindCode: "5"
+        });
+      }
+
+      async function syncAllToAgenda(notifyIsland) {
+        if (!window.nidong) return;
+        const prefix = "plg:" + window.nidong.pluginId + ":";
+        const nowMs = Date.now();
+        const activeIds = new Set();
+        for (let i = 0; i < homeworks.length; i++) {
+          const h = homeworks[i];
+          if (!h.completed && !isPastDeadline(h, nowMs)) {
+            activeIds.add(h.id);
+            activeIds.add(prefix + h.id);
+          }
+        }
+        // 自动清理已完成、已逾期或旧残留的作业日程
+        let removed = 0;
+        try {
+          const existing = await window.nidong.agenda.list();
+          for (let i = 0; i < existing.length; i++) {
+            const item = existing[i];
+            if (!activeIds.has(item.id)) {
+              await window.nidong.agenda.delete(item.id);
+              removed++;
+            }
+          }
+        } catch (e) {
+          addLog("清理旧 DDL 日程时出错：" + e.message);
+        }
+
+        let synced = 0;
+        for (let i = 0; i < homeworks.length; i++) {
+          const h = homeworks[i];
+          if (!h.completed && !isPastDeadline(h, nowMs)) {
+            await syncHomeworkToAgenda(h);
+            synced++;
+          }
+        }
+        await refreshSyncedAgendaView();
+        addLog(
+          "已将 " + synced + " 项未交且未截止的 MOOC 作业以「指针式 DDL」同步至泥洞日程表" +
+          (removed > 0 ? "（同时清理了 " + removed + " 条已完成或过期 DDL）" : "") + "。"
+        );
+        if (notifyIsland && synced > 0) {
+          await window.nidong.island.hint("MOOC：已同步 " + synced + " 项 DDL 指针至日程表");
+        }
+      }
+
+      // 对单份已解锁的互评 / 自评答卷提交满分与评语
+      async function submitPaperFullScore(tid, evaluateId, aid, comment) {
+        if (!window.nidong || !evaluateId) return false;
+        try {
+          // 拉取答卷采分点结构
+          const paperResp = await window.nidong.http.fetch({
+            url: "https://www.icourse163.org/web/j/mocQuizRpcBean.getOpenHomeworkPaperDto.rpc",
+            method: "POST",
+            headers: { "Content-Type": "application/json;charset=UTF-8" },
+            body: JSON.stringify({
+              tid: Number(tid),
+              evaluateId: Number(evaluateId),
+              withStdAnswerAndAnalyse: false,
+              phase: 2,
+              aid: aid != null ? Number(aid) : null
+            })
+          });
+          const paperJson = JSON.parse(paperResp.body);
+          const paperDto = (paperJson && paperJson.result) || {};
+          const qList = paperDto.subjectiveQList || [];
+          if (qList.length === 0) {
+            addLog("获取答卷采分点为空 (tid=" + tid + ", evaluateId=" + evaluateId + ")。");
+            return false;
+          }
+
+          // 组装 DWR submitSubmissionEvaluate 参数（所有采分点给最高分）
+          const dwrLines = [
+            "callCount=1",
+            "scriptSessionId=${scriptSessionId}190",
+            "httpSessionId=__NTESSTUDYSI__",
+            "c0-scriptName=MocEvaluateBean",
+            "c0-methodName=submitSubmissionEvaluate",
+            "c0-id=0"
+          ];
+          let eIdx = 0;
+          const qRefs = [];
+          for (let q = 0; q < qList.length; q++) {
+            const qObj = qList[q];
+            const jDtos = qObj.judgeDtos || [];
+            const jRefs = [];
+            for (let j = 0; j < jDtos.length; j++) {
+              const jd = jDtos[j];
+              const details = jd.details || [];
+              let maxScore = 0;
+              details.forEach(function(d) {
+                if (Number(d.score) > maxScore) maxScore = Number(d.score);
+              });
+              if (maxScore === 0 && Number(jd.maxScore) > 0) {
+                maxScore = Number(jd.maxScore);
+              }
+              const jidRef = "c0-e" + (++eIdx);
+              const jscoreRef = "c0-e" + (++eIdx);
+              const jObjRef = "c0-e" + (++eIdx);
+              dwrLines.push(jidRef + "=number:" + jd.id);
+              dwrLines.push(jscoreRef + "=number:" + maxScore);
+              dwrLines.push(jObjRef + "=Object_Object:{jid:reference:" + jidRef + ",jscore:reference:" + jscoreRef + "}");
+              jRefs.push("reference:" + jObjRef);
+            }
+            const qidRef = "c0-e" + (++eIdx);
+            const qcommentRef = "c0-e" + (++eIdx);
+            const canViewRef = "c0-e" + (++eIdx);
+            const jitemsRef = "c0-e" + (++eIdx);
+            const qItemObjRef = "c0-e" + (++eIdx);
+            dwrLines.push(qidRef + "=number:" + qObj.id);
+            dwrLines.push(qcommentRef + "=string:" + encodeURIComponent(comment));
+            dwrLines.push(canViewRef + "=boolean:true");
+            dwrLines.push(jitemsRef + "=Array:[" + jRefs.join(",") + "]");
+            dwrLines.push(
+              qItemObjRef + "=Object_Object:{qid:reference:" + qidRef +
+              ",qcomment:reference:" + qcommentRef +
+              ",answerCanViewComment:reference:" + canViewRef +
+              ",jitems:reference:" + jitemsRef + "}"
+            );
+            qRefs.push("reference:" + qItemObjRef);
+          }
+          const evalIdRef = "c0-e" + (++eIdx);
+          const testIdRef = "c0-e" + (++eIdx);
+          const qitemsArrRef = "c0-e" + (++eIdx);
+          dwrLines.push(evalIdRef + "=number:" + evaluateId);
+          dwrLines.push(testIdRef + "=number:" + tid);
+          dwrLines.push(qitemsArrRef + "=Array:[" + qRefs.join(",") + "]");
+          dwrLines.push(
+            "c0-param0=Object_Object:{evaluateId:reference:" + evalIdRef +
+            ",testId:reference:" + testIdRef +
+            ",qitems:reference:" + qitemsArrRef + "}"
+          );
+          dwrLines.push("c0-param1=boolean:false");
+          dwrLines.push("batchId=" + Date.now());
+
+          const submitResp = await window.nidong.http.fetch({
+            url: "https://www.icourse163.org/dwr/call/plaincall/MocEvaluateBean.submitSubmissionEvaluate.dwr",
+            method: "POST",
+            headers: { "Content-Type": "text/plain" },
+            body: dwrLines.join("\n")
+          });
+          if (submitResp.body && submitResp.body.indexOf("_remoteHandleException") !== -1) {
+            addLog("MOOC 提交评分返回异常：" + submitResp.body.slice(0, 220));
+            return false;
+          }
+          return true;
+        } catch (e) {
+          addLog("真实互评接口调用异常：" + e.message);
+          return false;
+        }
+      }
+
+      async function runAutoPeerGrade(notifyIsland) {
+        if (gradeInFlight) {
+          addLog("[自动互评] 已有互评任务正在执行，跳过重复触发。");
+          return;
+        }
+        gradeInFlight = true;
+        let gradedPapers = 0;
+        let gradedSelf = 0;
+        let stateChanged = false;
+        try {
+          const nowMs = Date.now();
+          for (let i = 0; i < homeworks.length; i++) {
+            const h = homeworks[i];
+            if (!moocUser || !moocUser.uid) continue;
+
+            // 仅对「当前正处于互评期内」且已提交的作业执行自动互评 / 自评，跳过提交阶段与已结束作业
+            const ps = computePeerState(h, nowMs);
+            if (!ps.inEvalWindow || !h.completed) continue;
+
+            const shouldCheck =
+              (h.peerTotal > h.peerDone) ||
+              (config.autoSelfGrade && h.selfRequired && !h.selfDone) ||
+              notifyIsland;
+            if (!shouldCheck) continue;
+
+            let detail = null;
+            try {
+              detail = await fetchEvaluateDetail(h.tid);
+            } catch (e) {
+              addLog("[自动互评] 查询《" + h.course + " - " + h.title + "》互评进度失败：" + e.message);
+              continue;
+            }
+            if (!detail) continue;
+            if (!detail.eligible) {
+              if (h.peerTotal !== 0 || h.selfRequired) {
+                h.peerTotal = 0;
+                h.peerDone = 0;
+                h.selfRequired = false;
+                h.selfDone = false;
+                stateChanged = true;
+              }
+              continue;
+            }
+
+            if (
+              h.peerTotal !== detail.total ||
+              h.peerDone !== detail.done ||
+              Boolean(h.selfRequired) !== detail.selfRequired ||
+              Boolean(h.selfDone) !== detail.selfDone
+            ) {
+              h.peerTotal = detail.total;
+              h.peerDone = detail.done;
+              h.selfRequired = detail.selfRequired;
+              h.selfDone = detail.selfDone;
+              stateChanged = true;
+            }
+
+            // 1. 逐份完成所有必评的互评作业（先续评已解锁的 startedEvaluate，再依次解锁下一份，直到 done >= total）
+            const allowPeer = Boolean(notifyIsland || config.autoGrade);
+            const maxSteps = allowPeer ? Math.max(0, detail.total - detail.done) + 2 : 0;
+            let step = 0;
+            while (allowPeer && detail && detail.eligible && detail.done < detail.total && step < maxSteps) {
+              step++;
+              if (detail.enoughAnswer === false && !detail.started) {
+                addLog(
+                  "[自动互评] 《" + h.course + " - " + h.title + "》当前可供互评的同学答卷不足（已完成 " +
+                  detail.done + "/" + detail.total + "），稍后巡检将自动续评。"
+                );
+                break;
+              }
+
+              let targetEvalId = null;
+              let targetAid = null;
+              let resumed = false;
+
+              if (detail.started && detail.started.evaluateId) {
+                targetEvalId = detail.started.evaluateId;
+                targetAid = detail.started.answerformId;
+                resumed = true;
+              } else {
+                const started = await startOnePeerEvaluate(h.tid);
+                if (!started || !started.evaluateId) {
+                  addLog(
+                    "[自动互评] 解锁《" + h.course + " - " + h.title + "》下一份互评失败（已完成 " +
+                    detail.done + "/" + detail.total + "），稍后重试。"
+                  );
+                  break;
+                }
+                targetEvalId = started.evaluateId;
+                targetAid = started.answerformId;
+              }
+
+              const comment = pickComment();
+              const ok = await submitPaperFullScore(h.tid, targetEvalId, targetAid, comment);
+              if (!ok) {
+                addLog(
+                  "[自动互评] 《" + h.course + " - " + h.title + "》提交评分失败 (evaluateId=" + targetEvalId + ")，中止本项。"
+                );
+                break;
+              }
+
+              // 提交后立刻向 MOOC 重新查询真实完成份数，确认已入账再继续解锁下一份
+              const prevDone = detail.done;
+              const nextDetail = await fetchEvaluateDetail(h.tid);
+              if (!nextDetail || !nextDetail.eligible) break;
+              detail = nextDetail;
+              h.peerTotal = detail.total;
+              h.peerDone = detail.done;
+              h.selfRequired = detail.selfRequired;
+              h.selfDone = detail.selfDone;
+              stateChanged = true;
+
+              if (detail.done > prevDone) {
+                addLog(
+                  "[自动互评] 批改《" + h.course + " - " + h.title + "》第 " + detail.done + "/" + detail.total +
+                  " 份" + (resumed ? "（续评已解锁份）" : "") +
+                  "：各采分点全部给满分，评语：「" + comment + "」"
+                );
+                gradedPapers++;
+              } else {
+                addLog(
+                  "[自动互评] 《" + h.course + " - " + h.title + "》提交后服务端已完成数未增长 (" +
+                  detail.done + "/" + detail.total + ")，停止避免重复提交。"
+                );
+                break;
+              }
+            }
+
+            // 2. 如勾选自动自评且存在未完成的「自评作业」，一并给满分提交
+            if (config.autoSelfGrade && detail && detail.eligible && detail.self && !detail.selfDone) {
+              const selfComment = pickComment();
+              const selfOk = await submitPaperFullScore(
+                h.tid,
+                detail.self.evaluateId,
+                detail.self.answerformId,
+                selfComment
+              );
+              if (selfOk) {
+                const afterSelf = await fetchEvaluateDetail(h.tid);
+                if (afterSelf && afterSelf.eligible) {
+                  detail = afterSelf;
+                  h.peerTotal = detail.total;
+                  h.peerDone = detail.done;
+                  h.selfRequired = detail.selfRequired;
+                  h.selfDone = detail.selfDone;
+                  stateChanged = true;
+                }
+                if (detail.selfDone) {
+                  addLog(
+                    "[自动自评] 完成《" + h.course + " - " + h.title + "》自评作业：各采分点全部给满分，评语：「" + selfComment + "」"
+                  );
+                  gradedSelf++;
+                } else {
+                  addLog("[自动自评] 《" + h.course + " - " + h.title + "》提交后服务端自评状态未变更，请点「查看」核对。");
+                }
+              }
+            }
+          }
+
+          if (stateChanged || gradedPapers > 0 || gradedSelf > 0) {
+            await saveState();
+            renderTable();
+          }
+
+          if (gradedPapers > 0 || gradedSelf > 0) {
+            const summaryParts = [];
+            if (gradedPapers > 0) summaryParts.push(gradedPapers + " 份互评");
+            if (gradedSelf > 0) summaryParts.push(gradedSelf + " 份自评");
+            if (notifyIsland && window.nidong) {
+              await window.nidong.island.hint(
+                "MOOC：已自动满分批改 " + summaryParts.join(" + ")
+              );
+            }
+          } else {
+            addLog("[自动互评] 当前没有待批改的互评或自评作业。");
+          }
+        } finally {
+          gradeInFlight = false;
+        }
+      }
+
+      async function runCheckCycle(source) {
+        if (checkInFlight) {
+          return;
+        }
+        checkInFlight = true;
+        try {
+          const now = new Date();
+          syncStat.textContent =
+            "上次巡检：" + pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds()) +
+            " (" + source + ")";
+          addLog("开始执行 MOOC 巡检 (" + source + ")…");
+
+          const prevNotified = new Set(Array.isArray(config.notifiedIds) ? config.notifiedIds : []);
+          const hadPrevBaseline = prevNotified.size > 0;
+
+          await pullRealMoocCoursesAndHomeworks();
+
+          if (config.autoAgenda) {
+            await syncAllToAgenda(false);
+          }
+          if (config.autoGrade || config.autoSelfGrade) {
+            await runAutoPeerGrade(false);
+          }
+          const nowMs = Date.now();
+          const todo = homeworks.filter(function(h) { return !h.completed && !isPastDeadline(h, nowMs); });
+          const newTodo = todo.filter(function(h) { return !prevNotified.has(h.id); });
+          config.notifiedIds = todo.map(function(h) { return h.id; });
+          config.lastCheckMs = nowMs;
+          await saveState();
+
+          // 仅在发现「新增未交作业」或用户手动点击「立即拉取/巡检」「登录成功」时弹出顶岛提示，避免每次后台轮询重复弹窗
+          const isManualOrLogin = source === "手动触发" || source === "登录成功触发" || source === "Cookie 导入";
+          if (config.autoIsland && window.nidong && todo.length > 0) {
+            if (isManualOrLogin) {
+              await window.nidong.island.hint(
+                "MOOC：已同步，当前共 " + todo.length + " 项未完成作业"
+              );
+            } else if (hadPrevBaseline && newTodo.length > 0) {
+              await window.nidong.island.hint(
+                "MOOC：发现 " + newTodo.length + " 项新未交作业（" + newTodo[0].course + " · " + newTodo[0].title + "）"
+              );
+            }
+          }
+          await updateBadge();
+        } finally {
+          checkInFlight = false;
+        }
+      }
+
+      // 登录与事件绑定
+      document.getElementById("btn-login").onclick = async function() {
+        if (!window.nidong) return;
+        const u = inpUser.value.trim();
+        const p = inpPass.value;
+        config.savedUser = u;
+        config.savedPass = p;
+        await saveState();
+        addLog("正在打开中国大学MOOC认证窗口（将自动填入账号密码并监听登录 Cookie）…");
+        try {
+          await window.nidong.auth.openWindow({
+            url: "https://www.icourse163.org/member/login.htm",
+            username: u,
+            password: p
+          });
+        } catch (e) {
+          addLog("打开认证窗口失败：" + e.message);
+        }
+      };
+
+      document.getElementById("btn-toggle-cookie").onclick = function() {
+        const shown = cookiePasteRow.style.display !== "none";
+        cookiePasteRow.style.display = shown ? "none" : "flex";
+      };
+
+      document.getElementById("btn-save-cookie").onclick = async function() {
+        if (!window.nidong) return;
+        const raw = inpCookie.value.trim();
+        if (!raw) return;
+        await window.nidong.auth.setCookies(raw);
+        cookiePasteRow.style.display = "none";
+        addLog("已保存手动导入的 Cookie，开始验证并拉取课程…");
+        await runCheckCycle("Cookie 导入");
+      };
+
+      btnLogout.onclick = async function() {
+        if (!window.nidong) return;
+        await window.nidong.auth.setCookies(null);
+        moocUser = null;
+        updateAuthUI();
+        addLog("已清除中国大学MOOC登录 Cookie。");
+      };
+
+      document.getElementById("btn-check-now").onclick = function() {
+        runCheckCycle("手动触发");
+      };
+
+      document.getElementById("btn-grade-all").onclick = function() {
+        runAutoPeerGrade(true);
+      };
+
+      document.getElementById("btn-open-log").onclick = async function() {
+        if (!window.nidong || !window.nidong.log) return;
+        try {
+          await window.nidong.log.open();
+        } catch (e) {
+          addLog("打开日志文件失败：" + e.message);
+        }
+      };
+
+      fltCourse.onchange = renderTable;
+      fltStatus.onchange = renderTable;
+      fltKind.onchange = renderTable;
+      fltPeer.onchange = renderTable;
+      fltKeyword.oninput = renderTable;
+      document.getElementById("btn-reset-filter").onclick = function() {
+        fltCourse.value = "all";
+        fltStatus.value = "all";
+        fltKind.value = "all";
+        fltPeer.value = "all";
+        fltKeyword.value = "";
+        renderTable();
+      };
+
+      document.getElementById("btn-test-hint").onclick = async function() {
+        if (!window.nidong) return;
+        const nowMs = Date.now();
+        const todo = homeworks.filter(function(h) { return !h.completed && !isPastDeadline(h, nowMs); }).length;
+        await window.nidong.island.hint("MOOC 监视器：当前有 " + todo + " 项未完成作业");
+        addLog("已向泥洞顶岛发送 4 秒短提示。");
+      };
+
+      document.getElementById("btn-test-remind").onclick = async function() {
+        if (!window.nidong) return;
+        const nowMs = Date.now();
+        const first = homeworks.find(function(h) { return !h.completed && !isPastDeadline(h, nowMs); }) || homeworks[0];
+        const title = first ? (first.course + " · " + first.title) : "MOOC 作业提醒";
+        const time = first ? first.deadline.slice(11, 16) : "21:30";
+        await window.nidong.island.remind({
+          name: "MOOC未交 · " + title,
+          start: time
+        });
+        addLog("已向泥洞顶岛发送 10 秒置顶强提醒。");
+      };
+
+      document.getElementById("btn-clear-agenda").onclick = async function() {
+        if (!window.nidong) return;
+        const list = await window.nidong.agenda.list();
+        for (let i = 0; i < list.length; i++) {
+          await window.nidong.agenda.delete(list[i].id);
+        }
+        await refreshSyncedAgendaView();
+        addLog("已清空本插件在泥洞日程表中的所有 DDL 指针条目。");
+      };
+
+      chkAutoAgenda.onchange = async function() {
+        config.autoAgenda = chkAutoAgenda.checked;
+        await saveState();
+        if (config.autoAgenda && homeworks.length > 0) {
+          await syncAllToAgenda(false);
+        }
+      };
+      chkAutoIsland.onchange = function() { config.autoIsland = chkAutoIsland.checked; saveState(); };
+      chkAutoGrade.onchange = function() { config.autoGrade = chkAutoGrade.checked; saveState(); };
+      chkAutoSelfGrade.onchange = function() { config.autoSelfGrade = chkAutoSelfGrade.checked; saveState(); };
+
+      selCommentMode.onchange = async function() {
+        config.commentMode = selCommentMode.value === "sequential" ? "sequential" : "random";
+        await saveState();
+        renderCommentPoolUI();
+        addLog("评语抽取方式已切换为：" + (config.commentMode === "sequential" ? "顺序轮换" : "随机抽取") + "。");
+      };
+
+      document.getElementById("btn-save-comments").onclick = async function() {
+        const lines = txtCommentPool.value.split(/\r?\n/);
+        const cleaned = lines
+          .map(function(s) { return s.trim(); })
+          .filter(function(s) { return s.length > 0; });
+        config.commentPool = cleaned.length > 0 ? cleaned : DEFAULT_COMMENTS.slice();
+        config.commentCursor = 0;
+        await saveState();
+        renderCommentPoolUI();
+        addLog("已保存自定义评语库（共 " + config.commentPool.length + " 条评语）。");
+      };
+
+      document.getElementById("btn-reset-comments").onclick = async function() {
+        config.commentPool = DEFAULT_COMMENTS.slice();
+        config.commentCursor = 0;
+        await saveState();
+        renderCommentPoolUI();
+        addLog("已恢复默认评语库（共 " + config.commentPool.length + " 条）。");
+      };
+
+      async function init() {
+        if (!window.nidong) {
+          addLog("警告：未检测到 window.nidong 宿主桥接环境");
+          return;
+        }
+        const savedHw = await window.nidong.storage.get("homeworks");
+        const savedCfg = await window.nidong.storage.get("config");
+        if (Array.isArray(savedHw) && savedHw.length > 0) {
+          homeworks = savedHw.filter(function(h) { return h && h.isReal !== false; });
+        } else {
+          homeworks = [];
+        }
+        if (savedCfg && typeof savedCfg === "object") {
+          config = Object.assign(config, savedCfg);
+        }
+        config.commentPool = normalizeCommentList(config.commentPool);
+        if (typeof config.autoSelfGrade === "undefined") {
+          config.autoSelfGrade = true;
+        }
+        const nowInitMs = Date.now();
+        if (!Array.isArray(config.notifiedIds) || config.notifiedIds.length === 0) {
+          config.notifiedIds = homeworks
+            .filter(function(h) { return !h.completed && !isPastDeadline(h, nowInitMs); })
+            .map(function(h) { return h.id; });
+        }
+        chkAutoAgenda.checked = !!config.autoAgenda;
+        chkAutoIsland.checked = !!config.autoIsland;
+        chkAutoGrade.checked = !!config.autoGrade;
+        chkAutoSelfGrade.checked = !!config.autoSelfGrade;
+        renderCommentPoolUI();
+        inpUser.value = config.savedUser || "";
+        inpPass.value = config.savedPass || "";
+
+        renderTable();
+        await updateBadge();
+        await refreshSyncedAgendaView();
+
+        // 检查是否已有保存的 MOOC 登录 Cookie
+        const cookies = await window.nidong.auth.getCookies();
+        if (cookies && (cookies["STUDY_SESS"] || cookies["STUDY_INFO"])) {
+          moocUser = parseStudyInfoCookie(cookies) || { name: "已保存会话", uid: "" };
+          updateAuthUI();
+          const needsUpgrade = homeworks.length === 0 || homeworks.some(function(h) {
+            return (
+              !h.chapter ||
+              !h.url ||
+              typeof h.hasPeerReview !== "boolean" ||
+              !h.deadlineMs ||
+              (h.hasPeerReview && h.evaluateEndMs && nowInitMs > h.evaluateEndMs && !h.evalFetchedAfterEnd)
+            );
+          });
+          const sinceLast = nowInitMs - (config.lastCheckMs || 0);
+          if (needsUpgrade || sinceLast >= 10 * 60 * 1000) {
+            addLog("检测到已保存的中国大学MOOC登录 Cookie，正在同步课程、作业与完整互评阶段…");
+            await runCheckCycle("启动自动同步");
+          } else {
+            addLog("已加载本地缓存的 " + homeworks.length + " 项 MOOC 作业（距离上次拉取不足 10 分钟，免重复请求）。");
+          }
+        } else {
+          updateAuthUI();
+          addLog("MOOC 监视器已就绪。点击上方「登录 MOOC 账号」即可弹窗自动填入账号密码完成认证。");
+        }
+
+        window.nidong.onAuth(function(ev) {
+          if (ev && ev.status === "success") {
+            addLog("捕获到中国大学MOOC登录成功 Cookie！正在同步课程与作业表…");
+            runCheckCycle("登录成功触发");
+          } else if (ev && ev.status === "closed") {
+            addLog("MOOC 登录窗口已关闭。");
+          }
+        });
+
+        window.nidong.onTick(function(isoNow) {
+          // 后台脉冲每 60 秒触发一次，仅在距上次巡检满 15 分钟时才发起网络巡检
+          if (Date.now() - (config.lastCheckMs || 0) < 15 * 60 * 1000) {
+            return;
+          }
+          runCheckCycle("后台定时巡检 " + String(isoNow).slice(11, 19));
+        });
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>

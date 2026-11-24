@@ -1,0 +1,15 @@
+{
+  "id": "edu.neu.plugin.mooc-monitor",
+  "name": "MOOC 监视器",
+  "version": "1.0.0",
+  "author": "sapphire_fic",
+  "description": "中国大学MOOC (icourse163.org) 作业截止检测、自动同步指针式 DDL 日程、未完成弹岛提醒与自动满分互评/自评插件",
+  "runtime": "webview",
+  "entry": "ui/index.html",
+  "background": true,
+  "permissions": [
+    "agenda:write",
+    "island:notify",
+    "http:*.icourse163.org"
+  ]
+}
